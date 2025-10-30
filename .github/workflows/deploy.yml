@@ -46,8 +46,11 @@ jobs:
       # !!! 关键步骤 !!!
       # 这里的 base 必须和你的仓库名一致！
       - name: Build
+        env:
+                  # 创建一个名为 VITE_MAPBOX_TOKEN 的环境变量
+                  VITE_MAPBOX_TOKEN: ${{ secrets.VITE_MAPBOX_TOKEN }}
         run: npm run build -- --base=/carbonMap/
-
+        
       # 5. 设置 GitHub Pages
       - name: Setup Pages
         uses: actions/configure-pages@v4
