@@ -23,7 +23,6 @@ venv/
 *.ipynb_checkpoints
 
 # --- Data / Large files ---
-data/
 *.csv
 *.zip
 *.pkl
@@ -31,7 +30,11 @@ data/
 *.tif
 *.shp
 *.geojson
+# Allow project policy geojson files to be tracked (override the global *.geojson above)
+!src/data/policies/
+!src/data/policies/*.geojson
 *.gpkg
+src/data/setting_data
 
 # --- Jupyter notebooks temporary files ---
 .ipynb_checkpoints/
