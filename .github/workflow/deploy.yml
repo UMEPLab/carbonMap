@@ -1,0 +1,64 @@
+# .github/workflows/deploy.yml
+
+name: Deploy Vite App to GitHub Pages
+
+on:
+  # 当你推送到 main (或 master) 分支时触发
+  push:
+    branches:
+      - main
+      - master
+  
+  # 允许你手动在 GitHub Actions 页面触发部署
+  workflow_dispatch:
+
+# 设置 GITHUB_TOKEN 的权限，以便部署
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      # 1. 检出你的代码
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # 2. 设置 Node.js 环境
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20 # 你可以改成你需要的 Node.js 版本
+          cache: 'npm' # 缓存 npm 依赖
+
+      # 3. 安装依赖
+      - name: Install dependencies
+        run: npm install
+
+      # 4. 构建项目
+      # !!! 关键步骤 !!!
+      # 这里的 base 必须和你的仓库名一致！
+      - name: Build
+        run: npm run build -- --base=/carbonMap/
+
+      # 5. 设置 GitHub Pages
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+
+      # 6. 上传构建好的静态文件 (dist 目录)
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./dist # Vite 默认的构建输出目录
+
+      # 7. 部署到 GitHub Pages
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
