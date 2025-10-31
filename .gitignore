@@ -24,7 +24,7 @@ venv/
 
 # --- Data / Large files ---
 data/
-output/
+!output/
 *.csv
 *.zip
 *.pkl
