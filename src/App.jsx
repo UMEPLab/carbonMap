@@ -385,6 +385,8 @@ function App() {
   const [isCarbonCollapsed, setIsCarbonCollapsed] = useState(false);
   // Keep previous agent scores to compute per-tick deltas for animation
   const prevScoresRef = useRef({});
+  // Ref for bottom UI bar to compute dynamic padding
+  const uiRef = useRef(null);
 
   const cancelReasoningScrollAnimation = useCallback(() => {
     if (reasoningScrollAnimRef.current) {
@@ -538,7 +540,7 @@ function App() {
     };
   }, [scenario]);
 
-  // 切换场景后，时间固定到08:00（不再对齐到首事件）
+  // On scenario switch, fix timeline start at 08:00 (do not snap to earliest event)
   useEffect(() => {
     setCurrentTime(8 * 3600);
   }, [scenario]);
@@ -596,6 +598,39 @@ function App() {
       map.remove();
     };
   }, []);
+
+  // Fit map view to agent path bounds on scenario load (account for bottom UI overlay)
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !precomputed) return;
+    try {
+      const bounds = new mapboxgl.LngLatBounds();
+      let hasPoints = false;
+      for (const a of precomputed.agents) {
+        for (const leg of a.legs) {
+          const path = Array.isArray(leg.path) ? leg.path : [];
+          for (const p of path) {
+            const lng = Number(p.lng);
+            const lat = Number(p.lat);
+            if (Number.isFinite(lng) && Number.isFinite(lat)) {
+              bounds.extend([lng, lat]);
+              hasPoints = true;
+            }
+          }
+        }
+      }
+      if (hasPoints) {
+        const uiRect = uiRef.current ? uiRef.current.getBoundingClientRect() : null;
+        // Bottom padding: UI height + extra spacing, clamped
+        const bottomPadding = uiRect ? Math.min(Math.max(uiRect.height + 16, 40), 240) : 60;
+        map.fitBounds(bounds, { padding: { top: 40, right: 40, bottom: bottomPadding, left: 40 }, maxZoom: 14, duration: 500 });
+      } else {
+        map.flyTo({ center: DEFAULT_VIEW.center, zoom: DEFAULT_VIEW.zoom });
+      }
+    } catch (e) {
+      // ignore bounds errors
+    }
+  }, [precomputed]);
 
   // 构建图层：有 t 的用 TripsLayer，否则用 PathLayer
   const layers = useMemo(() => {
@@ -812,7 +847,7 @@ function App() {
       </div>
 
       {/* 底部控制条 */}
-      <div className="ui">
+      <div className="ui" ref={uiRef}>
         <div className="row">
           <label>Day:</label>
           <select value={dayIndex} onChange={(e) => setDayIndex(Number(e.target.value))}>
