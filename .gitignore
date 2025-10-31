@@ -24,6 +24,10 @@ venv/
 
 # --- Data / Large files ---
 data/
+!src/data/
+src/data/*
+!src/data/policies/
+!src/data/policies/congestion_zone_example.geojson
 !output/
 *.csv
 *.zip

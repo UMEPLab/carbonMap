@@ -1,0 +1,28 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Congestion Zone",
+        "active_hours": [
+          [25200, 36000],
+          [61200, 72000]
+        ],
+        "price_per_km": 5.0
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [113.3000, 23.1200],
+            [113.3600, 23.1200],
+            [113.3600, 23.1700],
+            [113.3000, 23.1700],
+            [113.3000, 23.1200]
+          ]
+        ]
+      }
+    }
+  ]
+}
