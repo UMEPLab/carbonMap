@@ -5,6 +5,7 @@ import { ScatterplotLayer, GeoJsonLayer } from '@deck.gl/layers';
 import baselineTimeline from '../output/agents_timeline_baseline.json';
 import congestionTimeline from '../output/agents_timeline_congestion.json';
 import carboncreditTimeline from '../output/agents_timeline_carboncredit.json';
+import labLogo from './img/favicon.jpeg';
 // 加载拥堵区 GeoJSON 的 URL（由 Vite 解析为静态资源路径）
 const CONGESTION_ZONE_URL = new URL('./data/policies/congestion_zone_example.geojson', import.meta.url).href;
 
@@ -41,8 +42,9 @@ const CARBON_WEIGHTS = {
   walk: 5,
   bike: 4,
   bus: 2,
-  taxi: 0.6,
-  car: 0.4
+  subway: 2,
+  car_ev: 1,
+  car_ice: 0
 };
 function lerpColor(a, b, t) {
   const clamped = Math.max(0, Math.min(1, t));
@@ -714,11 +716,13 @@ function App() {
     return reasoningLogs.map((entry, idx) => {
       const modeColorArray = pollutionColor(entry.mode, efMapForReasoning);
       const cssColor = modeColorArray ? colorToCss(modeColorArray) : REASONING_COLOR_PALETTE[idx % REASONING_COLOR_PALETTE.length];
+      const displayAgentId = String(entry.agentId || '').replace(/^GZ-/, 'Resident-');
       return {
         ...entry,
         color: cssColor,
         key: `${entry.agentId}-${idx}`,
-        index: idx
+        index: idx,
+        displayAgentId
       };
     });
   }, [reasoningLogs, scenario]);
@@ -809,7 +813,7 @@ function App() {
                 <span className="reasoning-dot" style={{ background: entry.color }} />
                 <div className="reasoning-body">
                   <div className="reasoning-row">
-                    <span className="reasoning-agent">{entry.agentId}</span>
+                    <span className="reasoning-agent">{entry.displayAgentId || entry.agentId}</span>
                   </div>
                   <div className="reasoning-mode" style={{ color: entry.color }}>Mode · {entry.mode}</div>
                   <div className="reasoning-text">{entry.reason}</div>
@@ -820,30 +824,206 @@ function App() {
             <div className="reasoning-empty">Connect an LLM planner or provide rationale fields to populate this feed.</div>
           )}
         </div>
+
+        {/* Time-based statistics chart under the feed */}
+        <div className="reasoning-stats">
+          {/* CO₂ Over Time removed as requested */}
+
+          {/* Travel mode share over time (title only as requested) */}
+          <div className="stats-header">
+            <span className="stats-title">Travel Mode Share Over Time</span>
+          </div>
+          {precomputed && precomputed.agents && precomputed.agents.length ? (
+            (() => {
+              const width = 360;
+              const height = 120;
+              const padL = 6, padR = 6, padT = 8, padB = 18;
+              const w = width - padL - padR;
+              const h = height - padT - padB;
+
+              const bins = 24; // 24 hours
+              const efMapForColors = scenario?.meta?.emission_factors_g_per_km || DEFAULT_EF;
+
+              const countsPerBinByMode = Array.from({ length: bins }, () => ({}));
+              const totalsPerBin = new Array(bins).fill(0);
+              const modesSet = new Set();
+              for (const a of precomputed.agents) {
+                for (const leg of a.legs || []) {
+                  const tEnd = leg.end_time ?? leg.path?.[leg.path.length - 1]?.t;
+                  if (tEnd == null || tEnd > currentTime) continue; // only include completed trips up to current time
+                  const idx = Math.max(0, Math.min(bins - 1, Math.floor(tEnd / 3600)));
+                  const m = String(leg.mode || a.mode || 'unknown').toLowerCase();
+                  if (m === 'unknown') continue;
+                  countsPerBinByMode[idx][m] = (countsPerBinByMode[idx][m] || 0) + 1;
+                  totalsPerBin[idx] += 1;
+                  modesSet.add(m);
+                }
+              }
+
+              const modesAll = Array.from(modesSet);
+              const modes = [
+                ...MODE_ORDER.filter((m) => modesAll.includes(m)),
+                ...modesAll.filter((m) => !MODE_ORDER.includes(m))
+              ];
+
+              // Build shares per hour for each mode (length=bins)
+              const sharesByMode = {};
+              for (const m of modes) {
+                sharesByMode[m] = new Array(bins).fill(0);
+              }
+              for (let i = 0; i < bins; i++) {
+                const total = totalsPerBin[i];
+                for (const m of modes) {
+                  const cnt = countsPerBinByMode[i][m] || 0;
+                  sharesByMode[m][i] = total > 0 ? Math.max(0, Math.min(1, cnt / total)) : 0;
+                }
+              }
+
+              // Compute cumulative start/top per mode for stacked areas
+              const cumStart = {}; const cumTop = {};
+              for (const m of modes) { cumStart[m] = new Array(bins).fill(0); cumTop[m] = new Array(bins).fill(0); }
+              for (let i = 0; i < bins; i++) {
+                let acc = 0;
+                for (const m of modes) {
+                  cumStart[m][i] = acc;
+                  acc += sharesByMode[m][i];
+                  cumTop[m][i] = acc;
+                }
+              }
+
+              const xOfHour = (i) => padL + ((bins > 1 ? i / (bins - 1) : 0) * w);
+              const yOfShare = (s) => padT + (1 - s) * h;
+              const xOfTime = (t) => padL + Math.max(0, Math.min(1, t / (24 * 3600))) * w;
+              const ct = Math.min(Math.max(currentTime, 0), 24 * 3600);
+
+              function areaPathForMode(m) {
+                const top = cumTop[m];
+                const bottom = cumStart[m];
+                if (!top.length) return '';
+                const parts = [];
+                parts.push(`M${xOfHour(0).toFixed(2)},${yOfShare(top[0]).toFixed(2)}`);
+                for (let i = 1; i < bins; i++) {
+                  parts.push(`L${xOfHour(i).toFixed(2)},${yOfShare(top[i]).toFixed(2)}`);
+                }
+                for (let i = bins - 1; i >= 0; i--) {
+                  parts.push(`L${xOfHour(i).toFixed(2)},${yOfShare(bottom[i]).toFixed(2)}`);
+                }
+                parts.push('Z');
+                return parts.join(' ');
+              }
+
+              return (
+                <svg className="stats-chart" width={width} height={height} viewBox={`0 0 ${width} ${height}`}>
+                  {/* Background and axes */}
+                  <rect x={0} y={0} width={width} height={height} rx={8} ry={8} fill="rgba(255,255,255,0.75)" stroke="rgba(0,0,0,0.08)" />
+                  {/* Horizontal grid at 25%, 50%, 75% */}
+                  {[0.25, 0.5, 0.75].map((s) => (
+                    <line key={`grid-${s}`} x1={padL} y1={yOfShare(s)} x2={padL + w} y2={yOfShare(s)} stroke="rgba(0,0,0,0.08)" />
+                  ))}
+                  {/* X axis baseline */}
+                  <line x1={padL} y1={padT + h} x2={padL + w} y2={padT + h} stroke="rgba(0,0,0,0.12)" />
+                  {/* Stacked areas for each mode */}
+                  {modes.map((m) => {
+                    const cArr = pollutionColor(m, efMapForColors);
+                    const fill = `rgba(${cArr[0]},${cArr[1]},${cArr[2]},0.45)`;
+                    const stroke = colorToCss(cArr);
+                    const d = areaPathForMode(m);
+                    return (
+                      <path key={`area-${m}`} d={d} fill={fill} stroke={stroke} strokeWidth={0.6} />
+                    );
+                  })}
+                  {/* Current time marker */}
+                  <line x1={xOfTime(ct)} y1={padT} x2={xOfTime(ct)} y2={padT + h} stroke="rgba(37,99,235,0.9)" strokeDasharray="3 3" />
+                  {/* X ticks at 0,6,12,18,24 */}
+                  {[0, 6, 12, 18, 24].map((hr) => {
+                    const x = padL + (hr / 24) * w;
+                    return (
+                      <g key={`tick-${hr}`}>
+                        <line x1={x} y1={padT + h} x2={x} y2={padT + h + 4} stroke="rgba(0,0,0,0.25)" />
+                        <text x={x} y={padT + h + 12} fontSize={9} textAnchor="middle" fill="rgba(0,0,0,0.6)">{`${hr}h`}</text>
+                      </g>
+                    );
+                  })}
+                </svg>
+              );
+            })()
+          ) : (
+            (() => {
+              // Render empty axes and grid even if no agents, so there's always a chart
+              const width = 360;
+              const height = 120;
+              const padL = 6, padR = 6, padT = 8, padB = 18;
+              const w = width - padL - padR;
+              const h = height - padT - padB;
+              const xOfTime = (t) => padL + Math.max(0, Math.min(1, t / (24 * 3600))) * w;
+              const yOfShare = (s) => padT + (1 - s) * h;
+              const ct = Math.min(Math.max(currentTime, 0), 24 * 3600);
+              return (
+                <svg className="stats-chart" width={width} height={height} viewBox={`0 0 ${width} ${height}`}>
+                  <rect x={0} y={0} width={width} height={height} rx={8} ry={8} fill="rgba(255,255,255,0.75)" stroke="rgba(0,0,0,0.08)" />
+                  {[0.25, 0.5, 0.75].map((s) => (
+                    <line key={`grid-${s}`} x1={padL} y1={yOfShare(s)} x2={padL + w} y2={yOfShare(s)} stroke="rgba(0,0,0,0.08)" />
+                  ))}
+                  <line x1={padL} y1={padT + h} x2={padL + w} y2={padT + h} stroke="rgba(0,0,0,0.12)" />
+                  {[0, 6, 12, 18, 24].map((hr) => (
+                    <g key={`tick-${hr}`}>
+                      <line x1={padL + (hr / 24) * w} y1={padT + h} x2={padL + (hr / 24) * w} y2={padT + h + 4} stroke="rgba(0,0,0,0.25)" />
+                      <text x={padL + (hr / 24) * w} y={padT + h + 12} fontSize={9} textAnchor="middle" fill="rgba(0,0,0,0.6)">{`${hr}h`}</text>
+                    </g>
+                  ))}
+                  <line x1={xOfTime(ct)} y1={padT} x2={xOfTime(ct)} y2={padT + h} stroke="rgba(37,99,235,0.9)" strokeDasharray="3 3" />
+                </svg>
+              );
+            })()
+          )}
+
+          {/* Legend (mode share) — always render, even with 0% */}
+          <div className="stats-legend">
+            {(() => {
+              const efMapForColors = scenario?.meta?.emission_factors_g_per_km || DEFAULT_EF;
+              const countsByMode = {};
+              let totalTrips = 0;
+              if (precomputed && Array.isArray(precomputed.agents)) {
+                for (const a of precomputed.agents) {
+                  for (const leg of a.legs || []) {
+                    const tEnd = leg.end_time ?? leg.path?.[leg.path.length - 1]?.t;
+                    if (tEnd == null || tEnd > currentTime) continue; // only include completed trips up to current time
+                    const m = String(leg.mode || a.mode || 'unknown').toLowerCase();
+                    if (m === 'unknown') continue;
+                    countsByMode[m] = (countsByMode[m] || 0) + 1;
+                    totalTrips += 1;
+                  }
+                }
+              }
+              const modesAll = Object.keys(countsByMode);
+              const base = MODE_ORDER;
+              const extras = modesAll.filter((m) => !base.includes(m));
+              const modes = [...base, ...extras];
+              return modes.map((m) => {
+                const cArr = pollutionColor(m, efMapForColors);
+                const pct = totalTrips > 0 ? Math.round(((countsByMode[m] || 0) / totalTrips) * 100) : 0;
+                return (
+                  <div key={m} className="legend-item">
+                    <span className="legend-dot" style={{ background: colorToCss(cArr) }} />
+                    <span className="legend-label">{titleCaseFromMode(m)} — {pct}%</span>
+                  </div>
+                );
+              });
+            })()}
+          </div>
+        </div>
       </div>
 
       {/* 顶部显示：天数与时间（下方追加政策说明） */}
       <div className="topbar">
-        <div>Day {dayIndex} · {formatClock(currentTime)}</div>
-        {scenarioName === 'congestion_pricing' && (
-          <div className="topbar-policy">
-            {(() => {
-              const props = congestionZoneData?.features?.[0]?.properties || {};
-              const windows = Array.isArray(props.active_hours) ? props.active_hours : [];
-              const price = props.price_per_km;
-              const activeNow = windows.some((w) => Array.isArray(w) && w.length === 2 && currentTime >= Number(w[0]) && currentTime <= Number(w[1]));
-              const winText = windows
-                .map((w) => Array.isArray(w) && w.length === 2 ? `${formatClock(Number(w[0]))}–${formatClock(Number(w[1]))}` : '')
-                .filter(Boolean)
-                .join(', ');
-              return (
-                <span>
-                  Policy: Congestion Pricing · Active windows: {winText || '—'} · Price per km: {price != null ? `${price}` : '—'} · Status: {activeNow ? 'Active now' : 'Inactive now'}
-                </span>
-              );
-            })()}
+        <div className="topbar-row">
+          <div className="brand">
+            <img src={labLogo} alt="UMEP Lab logo" className="brand-logo" />
+            <span className="brand-name">UMEP Lab</span>
           </div>
-        )}
+          <div className="topbar-time">Day {dayIndex} · {formatClock(currentTime)}</div>
+        </div>
+        {/* Congestion Pricing policy display removed as requested */}
       </div>
 
       {/* 底部控制条 */}
@@ -903,7 +1083,11 @@ function App() {
         <div className="metric">{(currentEmission / 1000).toFixed(2)} kg CO₂</div>
         <div className="mode-list">
           {(() => {
-            const emissionModes = Object.keys(currentEmissionByMode || {});
+            // 确保侧面板总是显示标准模式，即使当前值为 0
+            const emissionModes = Array.from(new Set([
+              ...MODE_ORDER,
+              ...Object.keys(currentEmissionByMode || {})
+            ]));
             const ordered = [
               ...MODE_ORDER.filter((m) => emissionModes.includes(m)),
               ...emissionModes.filter((m) => !MODE_ORDER.includes(m))
@@ -911,7 +1095,7 @@ function App() {
             return ordered.map((mode) => (
               <div key={mode} className="mode-row">
                 <span className="mode-dot" style={{ background: colorToCss(pollutionColor(mode, (scenario?.meta?.emission_factors_g_per_km) || DEFAULT_EF)) }} />
-                <span className="mode-label">{mode}</span>
+                <span className="mode-label">{titleCaseFromMode(mode)}</span>
                 <span className="mode-value">{((currentEmissionByMode[mode] || 0) / 1000).toFixed(2)} kg</span>
               </div>
             ));
@@ -958,13 +1142,16 @@ function App() {
             <>
               <div className="sub">Top 10 agents</div>
               <div className="leaderboard">
-                {(carbonLeaderboard || []).slice(0, 10).map((row, i) => (
-                  <div className="lb-row" key={row.agentId}>
-                    <span className="lb-rank">{i + 1}</span>
-                    <span className="lb-agent">{row.agentId}</span>
-                    <span className="lb-score">{row.score.toFixed(1)} pts {row.delta > 0 ? <span className="lb-delta">+{row.delta.toFixed(1)}</span> : null}</span>
-                  </div>
-                ))}
+                {(carbonLeaderboard || []).slice(0, 10).map((row, i) => {
+                  const displayId = String(row.agentId || '').replace(/^GZ-/i, 'RESIDENT-');
+                  return (
+                    <div className="lb-row" key={row.agentId}>
+                      <span className="lb-rank">{i + 1}</span>
+                      <span className="lb-agent">{displayId}</span>
+                      <span className="lb-score">{row.score.toFixed(1)} pts {row.delta > 0 ? <span className="lb-delta">+{row.delta.toFixed(1)}</span> : null}</span>
+                    </div>
+                  );
+                })}
               </div>
             </>
           )}
