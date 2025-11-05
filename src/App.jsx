@@ -825,11 +825,113 @@ function App() {
           )}
         </div>
 
-        {/* Time-based statistics chart under the feed */}
-        <div className="reasoning-stats">
-          {/* CO₂ Over Time removed as requested */}
+        {/* Time-based statistics chart under the feed removed per request */}
+      </div>
 
-          {/* Travel mode share over time (title only as requested) */}
+      {/* 顶部显示：天数与时间（下方追加政策说明） */}
+      <div className="topbar">
+        <div className="topbar-row">
+          <div className="topbar-controls">
+            <label className="topbar-label" htmlFor="scenario-select">Scenario:</label>
+            <select
+              id="scenario-select"
+              className="topbar-select"
+              value={scenarioName}
+              onChange={(e) => setScenarioName(e.target.value)}
+            >
+              {SCENARIO_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value} disabled={!option.enabled}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="topbar-time">Day {dayIndex} · {formatClock(currentTime)}</div>
+        </div>
+        {/* Congestion Pricing policy display removed as requested */}
+      </div>
+
+      {/* 底部控制条 */}
+      <div className="ui" ref={uiRef}>
+        <div className="row">
+          <label>Day:</label>
+          <select value={dayIndex} onChange={(e) => setDayIndex(Number(e.target.value))}>
+            {Array.from({ length: totalDays }, (_, i) => i + 1).map((d) => (
+              <option key={d} value={d}>Day {d}</option>
+            ))}
+          </select>
+        </div>
+        {/* Policy summary moved to topbar */}
+        <div className="row playback-row">
+          <label>Playback:</label>
+          <div className="button-group">
+            <button
+              type="button"
+              className={isPlaying ? 'active' : ''}
+              onClick={() => setIsPlaying(true)}
+              disabled={isPlaying}
+            >
+              Play
+            </button>
+            <button
+              type="button"
+              className={!isPlaying ? 'active' : ''}
+              onClick={() => setIsPlaying(false)}
+              disabled={!isPlaying}
+            >
+              Pause
+            </button>
+          </div>
+        </div>
+        <div className="row speed-row">
+          <label>Speed:</label>
+          <select value={speed} onChange={(e) => setSpeed(Number(e.target.value))}>
+            <option value={1}>1x</option>
+            <option value={20}>20x</option>
+            <option value={50}>50x</option>
+            <option value={100}>100x</option>
+            <option value={200}>200x</option>
+          </select>
+          <div className="lab-container" aria-label="UMEP Lab" title="UMEP Lab">
+            <img src={labLogo} alt="UMEP Lab logo" className="lab-logo" />
+            <span className="lab-name">UMEP Lab</span>
+          </div>
+        </div>
+        <div className="row time-row">
+          <label>Time:</label>
+          <input type="range" min={0} max={DAY_SECONDS} step={60}
+            value={currentTime} onChange={(e) => setCurrentTime(Number(e.target.value))} />
+        </div>
+      </div>
+
+      {/* 在渲染前取出 efMap 供看板颜色使用 */}
+      {(() => { /* 立即执行，确保作用域 */ })()}
+      
+      <div className="panel">
+        <h3>Total CO₂ Today</h3>
+        <div className="metric">{(currentEmission / 1000).toFixed(2)} kg CO₂</div>
+        <div className="mode-list">
+          {(() => {
+            // 确保侧面板总是显示标准模式，即使当前值为 0
+            const emissionModes = Array.from(new Set([
+              ...MODE_ORDER,
+              ...Object.keys(currentEmissionByMode || {})
+            ]));
+            const ordered = [
+              ...MODE_ORDER.filter((m) => emissionModes.includes(m)),
+              ...emissionModes.filter((m) => !MODE_ORDER.includes(m))
+            ];
+            return ordered.map((mode) => (
+              <div key={mode} className="mode-row">
+                <span className="mode-dot" style={{ background: colorToCss(pollutionColor(mode, (scenario?.meta?.emission_factors_g_per_km) || DEFAULT_EF)) }} />
+                <span className="mode-label">{titleCaseFromMode(mode)}</span>
+                <span className="mode-value">{((currentEmissionByMode[mode] || 0) / 1000).toFixed(2)} kg</span>
+              </div>
+            ));
+          })()}
+        </div>
+        {/* Travel mode share moved from left reasoning panel to group stats */}
+        <div className="reasoning-stats">
           <div className="stats-header">
             <span className="stats-title">Travel Mode Share Over Time</span>
           </div>
@@ -914,15 +1016,11 @@ function App() {
 
               return (
                 <svg className="stats-chart" width={width} height={height} viewBox={`0 0 ${width} ${height}`}>
-                  {/* Background and axes */}
                   <rect x={0} y={0} width={width} height={height} rx={8} ry={8} fill="rgba(255,255,255,0.75)" stroke="rgba(0,0,0,0.08)" />
-                  {/* Horizontal grid at 25%, 50%, 75% */}
                   {[0.25, 0.5, 0.75].map((s) => (
                     <line key={`grid-${s}`} x1={padL} y1={yOfShare(s)} x2={padL + w} y2={yOfShare(s)} stroke="rgba(0,0,0,0.08)" />
                   ))}
-                  {/* X axis baseline */}
                   <line x1={padL} y1={padT + h} x2={padL + w} y2={padT + h} stroke="rgba(0,0,0,0.12)" />
-                  {/* Stacked areas for each mode */}
                   {modes.map((m) => {
                     const cArr = pollutionColor(m, efMapForColors);
                     const fill = `rgba(${cArr[0]},${cArr[1]},${cArr[2]},0.45)`;
@@ -932,9 +1030,7 @@ function App() {
                       <path key={`area-${m}`} d={d} fill={fill} stroke={stroke} strokeWidth={0.6} />
                     );
                   })}
-                  {/* Current time marker */}
                   <line x1={xOfTime(ct)} y1={padT} x2={xOfTime(ct)} y2={padT + h} stroke="rgba(37,99,235,0.9)" strokeDasharray="3 3" />
-                  {/* X ticks at 0,6,12,18,24 */}
                   {[0, 6, 12, 18, 24].map((hr) => {
                     const x = padL + (hr / 24) * w;
                     return (
@@ -949,7 +1045,6 @@ function App() {
             })()
           ) : (
             (() => {
-              // Render empty axes and grid even if no agents, so there's always a chart
               const width = 360;
               const height = 120;
               const padL = 6, padR = 6, padT = 8, padB = 18;
@@ -977,7 +1072,6 @@ function App() {
             })()
           )}
 
-          {/* Legend (mode share) — always render, even with 0% */}
           <div className="stats-legend">
             {(() => {
               const efMapForColors = scenario?.meta?.emission_factors_g_per_km || DEFAULT_EF;
@@ -1005,158 +1099,50 @@ function App() {
                 return (
                   <div key={m} className="legend-item">
                     <span className="legend-dot" style={{ background: colorToCss(cArr) }} />
-                    <span className="legend-label">{titleCaseFromMode(m)} — {pct}%</span>
+                    <span className="legend-label">{titleCaseFromMode(m)} · {pct}%</span>
                   </div>
                 );
               });
             })()}
           </div>
         </div>
-      </div>
-
-      {/* 顶部显示：天数与时间（下方追加政策说明） */}
-      <div className="topbar">
-        <div className="topbar-row">
-          <div className="brand">
-            <img src={labLogo} alt="UMEP Lab logo" className="brand-logo" />
-            <span className="brand-name">UMEP Lab</span>
+        {/* Scenario controls moved to topbar to keep right panel focused on statistics */}
+        {scenarioName === 'carbon_credits' && (
+          <div className={`panel-carbon${isCarbonCollapsed ? ' collapsed' : ''}`}>
+            <div className="panel-carbon-header">
+              <h3>Carbon Credits Leaderboard</h3>
+              <button
+                type="button"
+                className="panel-toggle"
+                onClick={() => setIsCarbonCollapsed((v) => !v)}
+                aria-label={isCarbonCollapsed ? 'Expand leaderboard' : 'Collapse leaderboard'}
+                title={isCarbonCollapsed ? 'Expand' : 'Collapse'}
+              >
+                {isCarbonCollapsed ? '▸' : '▾'}
+              </button>
+            </div>
+            {!isCarbonCollapsed && (
+              <>
+                <div className="sub">Top 5 agents</div>
+                <div className="leaderboard">
+                  {(carbonLeaderboard || []).slice(0, 5).map((row, i) => {
+                    const displayId = String(row.agentId || '').replace(/^GZ-/i, 'RESIDENT-');
+                    return (
+                      <div className="lb-row" key={row.agentId}>
+                        <span className="lb-rank">{i + 1}</span>
+                        <span className="lb-agent">{displayId}</span>
+                        <span className="lb-score">{row.score.toFixed(1)} pts {row.delta > 0 ? <span className="lb-delta">+{row.delta.toFixed(1)}</span> : null}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </>
+            )}
           </div>
-          <div className="topbar-time">Day {dayIndex} · {formatClock(currentTime)}</div>
-        </div>
-        {/* Congestion Pricing policy display removed as requested */}
+        )}
       </div>
 
-      {/* 底部控制条 */}
-      <div className="ui" ref={uiRef}>
-        <div className="row">
-          <label>Day:</label>
-          <select value={dayIndex} onChange={(e) => setDayIndex(Number(e.target.value))}>
-            {Array.from({ length: totalDays }, (_, i) => i + 1).map((d) => (
-              <option key={d} value={d}>Day {d}</option>
-            ))}
-          </select>
-        </div>
-        {/* Policy summary moved to topbar */}
-        <div className="row playback-row">
-          <label>Playback:</label>
-          <div className="button-group">
-            <button
-              type="button"
-              className={isPlaying ? 'active' : ''}
-              onClick={() => setIsPlaying(true)}
-              disabled={isPlaying}
-            >
-              Play
-            </button>
-            <button
-              type="button"
-              className={!isPlaying ? 'active' : ''}
-              onClick={() => setIsPlaying(false)}
-              disabled={!isPlaying}
-            >
-              Pause
-            </button>
-          </div>
-        </div>
-        <div className="row">
-          <label>Speed:</label>
-          <select value={speed} onChange={(e) => setSpeed(Number(e.target.value))}>
-            <option value={1}>1x</option>
-            <option value={20}>20x</option>
-            <option value={50}>50x</option>
-            <option value={100}>100x</option>
-            <option value={200}>200x</option>
-          </select>
-        </div>
-        <div className="row time-row">
-          <label>Time:</label>
-          <input type="range" min={0} max={DAY_SECONDS} step={60}
-            value={currentTime} onChange={(e) => setCurrentTime(Number(e.target.value))} />
-        </div>
-      </div>
-
-      {/* 在渲染前取出 efMap 供看板颜色使用 */}
-      {(() => { /* 立即执行，确保作用域 */ })()}
       
-      <div className="panel">
-        <h3>Total CO₂ Today</h3>
-        <div className="metric">{(currentEmission / 1000).toFixed(2)} kg CO₂</div>
-        <div className="mode-list">
-          {(() => {
-            // 确保侧面板总是显示标准模式，即使当前值为 0
-            const emissionModes = Array.from(new Set([
-              ...MODE_ORDER,
-              ...Object.keys(currentEmissionByMode || {})
-            ]));
-            const ordered = [
-              ...MODE_ORDER.filter((m) => emissionModes.includes(m)),
-              ...emissionModes.filter((m) => !MODE_ORDER.includes(m))
-            ];
-            return ordered.map((mode) => (
-              <div key={mode} className="mode-row">
-                <span className="mode-dot" style={{ background: colorToCss(pollutionColor(mode, (scenario?.meta?.emission_factors_g_per_km) || DEFAULT_EF)) }} />
-                <span className="mode-label">{titleCaseFromMode(mode)}</span>
-                <span className="mode-value">{((currentEmissionByMode[mode] || 0) / 1000).toFixed(2)} kg</span>
-              </div>
-            ));
-          })()}
-        </div>
-        <div className="panel-board">
-          <div className="panel-board-header">Scenario</div>
-          <div className="scenario-options">
-            {SCENARIO_OPTIONS.map((option) => {
-              const isActive = scenarioName === option.value;
-              return (
-                <button
-                  type="button"
-                  key={option.value}
-                  className={`scenario-option${isActive ? ' active' : ''}`}
-                  onClick={() => option.enabled && setScenarioName(option.value)}
-                  disabled={!option.enabled}
-                >
-                  <span className="scenario-label">{option.label}</span>
-                  {!option.enabled && <span className="scenario-tag">Coming soon</span>}
-                </button>
-              );
-            })}
-          </div>
-          {/* 已移除场景详情，改为统一在顶部显示 */}
-        </div>
-      </div>
-
-      {scenarioName === 'carbon_credits' && (
-        <div className={`panel panel-carbon${isCarbonCollapsed ? ' collapsed' : ''}`}>
-          <div className="panel-carbon-header">
-            <h3>Carbon Credits Leaderboard</h3>
-            <button
-              type="button"
-              className="panel-toggle"
-              onClick={() => setIsCarbonCollapsed((v) => !v)}
-              aria-label={isCarbonCollapsed ? 'Expand leaderboard' : 'Collapse leaderboard'}
-              title={isCarbonCollapsed ? 'Expand' : 'Collapse'}
-            >
-              {isCarbonCollapsed ? '▸' : '▾'}
-            </button>
-          </div>
-          {!isCarbonCollapsed && (
-            <>
-              <div className="sub">Top 10 agents</div>
-              <div className="leaderboard">
-                {(carbonLeaderboard || []).slice(0, 10).map((row, i) => {
-                  const displayId = String(row.agentId || '').replace(/^GZ-/i, 'RESIDENT-');
-                  return (
-                    <div className="lb-row" key={row.agentId}>
-                      <span className="lb-rank">{i + 1}</span>
-                      <span className="lb-agent">{displayId}</span>
-                      <span className="lb-score">{row.score.toFixed(1)} pts {row.delta > 0 ? <span className="lb-delta">+{row.delta.toFixed(1)}</span> : null}</span>
-                    </div>
-                  );
-                })}
-              </div>
-            </>
-          )}
-        </div>
-      )}
     </div>
   );
 }

@@ -19,7 +19,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helv
 .ui .playback-row label { align-self: flex-start; padding-top: 4px; }
 .ui select { min-width: 120px; }
 
-.panel { position: absolute; top: 14px; right: 14px; background: rgba(255,255,255,0.78); border: 1px solid rgba(0,0,0,0.08); padding: 12px 14px; border-radius: 12px; box-shadow: 0 8px 28px rgba(0,0,0,0.12); min-width: 260px; backdrop-filter: saturate(160%) blur(8px); z-index: 1000; pointer-events: auto; height: calc(100vh - 180px); max-height: calc(100vh - 180px); overflow-y: auto; }
+.panel { position: absolute; top: 14px; right: 14px; background: rgba(255,255,255,0.78); border: 1px solid rgba(0,0,0,0.08); padding: 12px 14px; border-radius: 12px; box-shadow: 0 8px 28px rgba(0,0,0,0.12); min-width: 260px; width: 300px; backdrop-filter: saturate(160%) blur(8px); z-index: 1000; pointer-events: auto; height: auto; max-height: none; overflow: visible; }
 .panel h3 { margin: 0 0 10px; font-size: 14px; font-weight: 600; color: #111; }
 .panel .metric { font-size: 22px; font-weight: 700; color: #111; margin-bottom: 6px; }
 .panel .sub { font-size: 12px; color: #555; margin-bottom: 10px; }
@@ -38,15 +38,20 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helv
 .scenario-label { text-transform: capitalize; }
 .scenario-tag { font-size: 11px; color: #6b7280; letter-spacing: 0.02em; }
 
-/* Carbon Credits panel positioned to the left of the right panel */
-.panel.panel-carbon { right: 290px; min-width: 240px; backdrop-filter: saturate(170%) blur(8px); }
+/* Carbon Credits leaderboard inside right panel */
+.panel-carbon { margin-top: 16px; }
 .panel-carbon h3 { display: flex; align-items: center; gap: 6px; font-size: 14px; }
 .panel-carbon-header { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .panel-toggle { height: 24px; width: 28px; padding: 0; border-radius: 999px; border: 1px solid rgba(0,0,0,0.12); background: linear-gradient(#fff, #f7f7f7); font-size: 14px; color: #1f2937; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; transition: background 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease; }
 .panel-toggle:hover { background: linear-gradient(#fff, #f0f0f0); box-shadow: 0 4px 12px rgba(28,144,255,0.12); }
-.panel.panel-carbon.collapsed { min-width: 200px; height: auto; max-height: none; }
-.panel.panel-carbon.collapsed .leaderboard,
-.panel.panel-carbon.collapsed .sub { display: none; }
+.panel-carbon.collapsed { }
+.panel-carbon.collapsed .leaderboard,
+.panel-carbon.collapsed .sub { display: none; }
+
+/* Lab brand inline inside bottom UI bar */
+.ui .lab-container { display: inline-flex; align-items: center; gap: 8px; margin-left: auto; }
+.lab-logo { width: 18px; height: 18px; border-radius: 4px; box-shadow: 0 0 0 1px rgba(0,0,0,0.12); }
+.lab-name { font-size: 12px; font-weight: 700; color: #111; letter-spacing: 0.02em; }
 .panel-carbon h3::before { content: '🏆'; }
 .leaderboard { display: grid; gap: 6px; }
 .lb-row { display: grid; grid-template-columns: 24px 1fr auto; align-items: center; gap: 8px; padding: 6px 8px; border-radius: 10px; background: rgba(255,255,255,0.78); border: 1px solid rgba(0,0,0,0.06); box-shadow: 0 4px 12px rgba(0,0,0,0.06); transition: transform 0.16s ease, box-shadow 0.16s ease; }
@@ -64,6 +69,11 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helv
 .brand-logo { width: 18px; height: 18px; border-radius: 4px; box-shadow: 0 0 0 1px rgba(0,0,0,0.12); }
 .brand-name { font-size: 12px; font-weight: 700; color: #111; letter-spacing: 0.02em; }
 .topbar-time { font-size: 14px; color: #111; }
+
+/* Interactive controls inside topbar */
+.topbar-controls { display: inline-flex; align-items: center; gap: 8px; pointer-events: auto; }
+.topbar-label { font-size: 12px; color: #555; }
+.topbar-select { font-size: 12px; min-width: 160px; border-radius: 8px; border: 1px solid rgba(0,0,0,0.12); background: #fff; padding: 4px 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
 
 .reasoning-panel { position: absolute; top: 14px; left: 14px; width: 360px; height: calc(100vh - 180px); background: rgba(255,255,255,0.9); border: 1px solid rgba(0,0,0,0.08); border-radius: 18px; padding: 20px 22px; box-shadow: 0 14px 40px rgba(15,23,42,0.2); backdrop-filter: saturate(170%) blur(12px); z-index: 1000; pointer-events: auto; display: flex; flex-direction: column; gap: 12px; overflow: hidden; }
 .reasoning-header { display: flex; flex-direction: column; gap: 2px; }
