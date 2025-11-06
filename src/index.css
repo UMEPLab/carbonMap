@@ -1,3 +1,4 @@
+:root { --ui-height: 160px; }
 * { box-sizing: border-box; }
 html, body, #root { height: 100%; margin: 0; }
 body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', 'Apple Color Emoji', 'Segoe UI Emoji', sans-serif; }
@@ -30,13 +31,13 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helv
 .panel .mode-value { font-size: 13px; color: #111; font-weight: 600; }
 .panel .panel-board { margin-top: 16px; display: grid; gap: 10px; }
 .panel-board-header { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; color: #555; }
-.scenario-options { display: grid; gap: 8px; }
-.scenario-option { display: inline-flex; flex-direction: column; align-items: flex-start; gap: 2px; padding: 8px 12px; border-radius: 10px; border: 1px solid rgba(0,0,0,0.1); background: rgba(255,255,255,0.96); font-size: 13px; color: #1f2937; cursor: pointer; transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease; width: 100%; }
+.scenario-options { display: grid; gap: 8px; grid-template-columns: 1fr 1fr; }
+.scenario-option { display: inline-flex; flex-direction: row; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 12px; border-radius: 10px; border: 1px solid rgba(0,0,0,0.1); background: rgba(255,255,255,0.96); font-size: 13px; color: #1f2937; cursor: pointer; transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease; width: 100%; white-space: nowrap; }
 .scenario-option:hover:not(:disabled) { border-color: rgba(28,144,255,0.45); box-shadow: 0 4px 16px rgba(28,144,255,0.18); transform: translateY(-1px); }
 .scenario-option.active { border-color: rgba(28,144,255,0.6); background: rgba(236,245,255,0.9); box-shadow: 0 4px 18px rgba(28,144,255,0.25); font-weight: 600; }
 .scenario-option:disabled { opacity: 0.5; cursor: not-allowed; border-style: dashed; }
-.scenario-label { text-transform: capitalize; }
-.scenario-tag { font-size: 11px; color: #6b7280; letter-spacing: 0.02em; }
+.scenario-label { text-transform: capitalize; flex: 1 1 auto; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.scenario-tag { font-size: 11px; color: #6b7280; letter-spacing: 0.02em; flex-shrink: 0; white-space: nowrap; }
 
 /* Carbon Credits leaderboard inside right panel */
 .panel-carbon { margin-top: 16px; }
@@ -44,7 +45,6 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helv
 .panel-carbon-header { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .panel-toggle { height: 24px; width: 28px; padding: 0; border-radius: 999px; border: 1px solid rgba(0,0,0,0.12); background: linear-gradient(#fff, #f7f7f7); font-size: 14px; color: #1f2937; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; transition: background 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease; }
 .panel-toggle:hover { background: linear-gradient(#fff, #f0f0f0); box-shadow: 0 4px 12px rgba(28,144,255,0.12); }
-.panel-carbon.collapsed { }
 .panel-carbon.collapsed .leaderboard,
 .panel-carbon.collapsed .sub { display: none; }
 
@@ -62,23 +62,25 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helv
 .lb-delta { margin-left: 6px; color: #16a34a; font-weight: 800; background: rgba(22,163,74,0.12); border: 1px solid rgba(22,163,74,0.25); padding: 1px 6px; border-radius: 999px; font-size: 11px; }
 
 /* 顶部时间条 */
-.topbar { position: absolute; top: 14px; left: 50%; transform: translateX(-50%); background: rgba(255,255,255,0.85); border: 1px solid rgba(0,0,0,0.08); padding: 8px 12px; border-radius: 10px; box-shadow: 0 8px 28px rgba(0,0,0,0.12); font-size: 14px; color: #111; z-index: 1000; pointer-events: none; }
+.topbar { position: absolute; top: 14px; left: 50%; transform: translateX(-50%); background: rgba(255,255,255,0.85); border: 1px solid rgba(0,0,0,0.08); padding: 12px 16px; border-radius: 12px; box-shadow: 0 8px 28px rgba(0,0,0,0.12); font-size: 15px; color: #111; z-index: 1000; pointer-events: none; }
 .topbar-policy { font-size: 12px; color: #555; margin-top: 4px; }
-.topbar-row { display: flex; align-items: center; gap: 10px; }
-.brand { display: inline-flex; align-items: center; gap: 8px; }
-.brand-logo { width: 18px; height: 18px; border-radius: 4px; box-shadow: 0 0 0 1px rgba(0,0,0,0.12); }
-.brand-name { font-size: 12px; font-weight: 700; color: #111; letter-spacing: 0.02em; }
-.topbar-time { font-size: 14px; color: #111; }
+.topbar-row { display: flex; align-items: center; gap: 12px; }
+.brand { display: inline-flex; align-items: center; gap: 10px; }
+.brand-logo { width: 24px; height: 24px; border-radius: 6px; box-shadow: 0 0 0 1px rgba(0,0,0,0.12); }
+.brand-name { font-size: 14px; font-weight: 700; color: #111; letter-spacing: 0.02em; }
+.topbar-time { font-size: 15px; color: #111; }
 
 /* Interactive controls inside topbar */
 .topbar-controls { display: inline-flex; align-items: center; gap: 8px; pointer-events: auto; }
 .topbar-label { font-size: 12px; color: #555; }
 .topbar-select { font-size: 12px; min-width: 160px; border-radius: 8px; border: 1px solid rgba(0,0,0,0.12); background: #fff; padding: 4px 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
 
-.reasoning-panel { position: absolute; top: 14px; left: 14px; width: 360px; height: calc(100vh - 180px); background: rgba(255,255,255,0.9); border: 1px solid rgba(0,0,0,0.08); border-radius: 18px; padding: 20px 22px; box-shadow: 0 14px 40px rgba(15,23,42,0.2); backdrop-filter: saturate(170%) blur(12px); z-index: 1000; pointer-events: auto; display: flex; flex-direction: column; gap: 12px; overflow: hidden; }
+.reasoning-panel { position: absolute; top: 14px; left: 14px; bottom: calc(32px + var(--ui-height, 160px)); width: 360px; background: rgba(255,255,255,0.9); border: 1px solid rgba(0,0,0,0.08); border-radius: 18px; padding: 14px 22px 20px 22px; box-shadow: 0 14px 40px rgba(15,23,42,0.2); backdrop-filter: saturate(170%) blur(12px); z-index: 1000; pointer-events: auto; display: flex; flex-direction: column; gap: 12px; overflow: hidden; }
 .reasoning-header { display: flex; flex-direction: column; gap: 2px; }
 .reasoning-header h3 { margin: 0; font-size: 14px; font-weight: 600; color: #111; }
 .reasoning-subtitle { font-size: 12px; color: #6b7280; }
+.reasoning-separator { height: 1px; background: rgba(0,0,0,0.12); margin: 8px 0 12px; }
+.reasoning-title { margin-top: 6px; }
 .reasoning-list { flex: 1 1 auto; max-height: none; display: grid; gap: 14px; overflow-y: auto; padding-right: 6px; overscroll-behavior: contain; touch-action: pan-y; will-change: scroll-position; }
 .reasoning-list::-webkit-scrollbar { width: 6px; }
 .reasoning-list::-webkit-scrollbar-track { background: transparent; }
@@ -93,6 +95,22 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helv
 .reasoning-mode { font-size: 12px; text-transform: capitalize; font-weight: 600; }
 .reasoning-text { font-size: 12px; line-height: 1.4; color: #1f2937; }
 .reasoning-empty { font-size: 12px; line-height: 1.5; color: #6b7280; background: rgba(15,23,42,0.04); border: 1px dashed rgba(15,23,42,0.12); border-radius: 10px; padding: 14px 16px; }
+
+/* Policy & Scenario: standalone panel above reasoning feed */
+.policy-panel { position: absolute; top: 14px; left: 14px; width: 300px; background: rgba(255,255,255,0.9); border: 1px solid rgba(0,0,0,0.08); border-radius: 12px; padding: 12px 14px; box-shadow: 0 8px 28px rgba(0,0,0,0.12); display: grid; gap: 8px; z-index: 1000; pointer-events: auto; }
+.policy-header { display: flex; align-items: center; justify-content: space-between; }
+.policy-header h3 { margin: 0; font-size: 14px; font-weight: 600; color: #111; }
+.policy-controls { display: inline-flex; align-items: center; gap: 8px; }
+.policy-controls label { font-size: 12px; color: #555; }
+.policy-controls select { font-size: 12px; min-width: 160px; border-radius: 8px; border: 1px solid rgba(0,0,0,0.12); background: #fff; padding: 4px 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+.policy-content { display: grid; gap: 8px; }
+.policy-sub { font-size: 12px; color: #6b7280; }
+.policy-list { display: grid; gap: 8px; }
+.policy-item { display: flex; align-items: center; justify-content: space-between; font-size: 12px; color: #1f2937; }
+.policy-label { font-weight: 600; }
+.policy-value { font-weight: 700; color: #111; }
+.policy-empty { font-size: 12px; color: #6b7280; background: rgba(15,23,42,0.04); border: 1px dashed rgba(15,23,42,0.12); border-radius: 10px; padding: 10px 12px; }
+.policy-hint { font-size: 11px; color: #6b7280; }
 
 /* Stats section under reasoning feed */
 .reasoning-stats { display: grid; gap: 8px; }
