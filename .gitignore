@@ -23,19 +23,15 @@ venv/
 *.ipynb_checkpoints
 
 # --- Data / Large files ---
-data/
 !src/data/
-src/data/*
-!src/data/policies/
-!src/data/policies/congestion_zone_example.geojson
 !output/
+src/data/setting_data
 *.csv
 *.zip
 *.pkl
 *.h5
 *.tif
 *.shp
-*.geojson
 *.gpkg
 
 # --- Jupyter notebooks temporary files ---
