@@ -1,0 +1,18 @@
+{
+  "type": "FeatureCollection",
+  "name": "Carbon Education Points",
+  "features": [
+    { "type": "Feature", "properties": { "name": "Eco Plaza", "type": "education" }, "geometry": { "type": "Point", "coordinates": [113.2644, 23.1291] } },
+    { "type": "Feature", "properties": { "name": "Green Park North", "type": "education" }, "geometry": { "type": "Point", "coordinates": [113.2720, 23.1372] } },
+    { "type": "Feature", "properties": { "name": "Sustainability Center", "type": "education" }, "geometry": { "type": "Point", "coordinates": [113.2558, 23.1330] } },
+    { "type": "Feature", "properties": { "name": "Low‑Carbon Hub East", "type": "education" }, "geometry": { "type": "Point", "coordinates": [113.2795, 23.1255] } },
+    { "type": "Feature", "properties": { "name": "Climate Action Corner", "type": "education" }, "geometry": { "type": "Point", "coordinates": [113.2480, 23.1210] } },
+    { "type": "Feature", "properties": { "name": "Green School West", "type": "education" }, "geometry": { "type": "Point", "coordinates": [113.2592, 23.1422] } },
+    { "type": "Feature", "properties": { "name": "Eco Museum", "type": "education" }, "geometry": { "type": "Point", "coordinates": [113.2701, 23.1188] } },
+    { "type": "Feature", "properties": { "name": "Carbon Literacy Kiosk", "type": "education" }, "geometry": { "type": "Point", "coordinates": [113.2850, 23.1325] } },
+    { "type": "Feature", "properties": { "name": "Renewables Pavilion", "type": "education" }, "geometry": { "type": "Point", "coordinates": [113.2439, 23.1299] } },
+    { "type": "Feature", "properties": { "name": "Bike‑Share Learning Spot", "type": "education" }, "geometry": { "type": "Point", "coordinates": [113.2688, 23.1460] } },
+    { "type": "Feature", "properties": { "name": "Transit Awareness Booth", "type": "education" }, "geometry": { "type": "Point", "coordinates": [113.2762, 23.1403] } },
+    { "type": "Feature", "properties": { "name": "Circular Economy Node", "type": "education" }, "geometry": { "type": "Point", "coordinates": [113.2531, 23.1256] } }
+  ]
+}
